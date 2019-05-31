@@ -1,0 +1,36 @@
+# path_info
+# root_path: /home/neil/leondelee/pointmatching/graph/
+root_path: /home/liangwei/3D/graph/
+data_path: data/
+checkpoint_path: checkpoints/
+log_path: logs/
+
+# dataset info
+K: 40
+dataset: modelnet
+
+#model
+num_points: 5000
+in_channels: 3
+out_channels: 10
+mid_channels: 1000
+drop_prob1: 0.1
+drop_prob2: 0.45
+
+
+# train
+mode: debug
+max_epoch: 100
+lr: 0.003
+weight_decay: 0.9
+lr_step: 20
+lr_decay: 0.1
+eval_step: 1
+batch_size: 1
+gpu: 0
+
+# results
+name: demo
+checkpoint_name: _best.pth
+log_name: .log
+

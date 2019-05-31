@@ -1,0 +1,27 @@
+2019-05-20 08:59:11,121 - first - debug: 
+Using Configuration:
+{
+    root_path: /home/liangwei/3D/graph/
+    data_path: data/
+    checkpoint_path: checkpoints/
+    log_path: logs/
+    K: 6
+    dataset: modelnet
+    num_points: 2000
+    in_channels: 3
+    out_channels: 10
+    mode: debug
+    max_epoch: 300
+    lr: 0.001
+    weight_decay: 0.9
+    lr_step: 20
+    lr_decay: 0.1
+    eval_step: 1
+    batch_size: 1
+    gpu: 1
+    name: first
+    checkpoint_name: _best.pth
+    log_name: .log
+}
+2019-05-20 08:59:12,223 - first - debug: --------------------New Training Starts--------------------
+2019-05-20 08:59:12,223 - first - debug: Epoch 0/300:
