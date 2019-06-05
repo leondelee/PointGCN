@@ -1,44 +1,47 @@
+#! -*- encoding: utf-8 -*-
 # Author: llw
+
 import torch.utils.data as DT
 from torch_geometric.nn import knn_graph
 
 from data.factory import *
+from utils.tools import *
+from data.global_pooling_model.read_data import *
 
 
 class ModelNet(DT.Dataset):
-    def __init__(self, cfg, train=True):
+    def __init__(self, cfg, data_type='train', batch_index=0):
         super(ModelNet, self).__init__()
-        self.cfg = cfg
-        if train:
-            self.data = get_modelnet_data(cfg, train=train)
-        else:
-            self.data = get_modelnet_data(cfg, train=train)
+        self.num_points = cfg["num_points"]
+        self.K = cfg["K"]
+        self.pts_batch, self.label_batch = my_load_data(self.num_points, 'farthest_sampling', data_type, batch_index)
+        self.lap_batch = my_prepareGraph(self.pts_batch, self.K, self.num_points, data_type, batch_index)
+        self.lap_batch = self.lap_batch.tocsr()
+        self.lap_batch = [lap for lap in self.lap_batch]
 
     def __getitem__(self, item):
-        choice = t.randperm(self.data[item].pos.shape[0])
-        num_points = self.data[item].pos.shape[0]
-        pos = self.data[item].pos[choice]
-        y = self.data[item].y
-        edge_index = knn_graph(pos[0:num_points], k=self.cfg["K"])
-        return pos[0:num_points], y, edge_index
+        pts = self.pts_batch[item]
+        label = self.label_batch[item]
+        lap = self.lap_batch[item].todense()
+        pts = t.tensor(pts).float()
+        label = t.tensor(label).float()
+        lap = t.tensor(lap.reshape(self.num_points, self.num_points)).float()
+        return pts, label, lap
 
     def __len__(self):
-        return 309
+        return len(self.pts_batch)
 
     def size(self):
         return self.__len__()
 
 
 if __name__ == '__main__':
-    with open("../cfg/cfg.yml", 'r') as file:
-        cfg = yaml.load(file)
-    ds = ModelNet(cfg, False)
-    print(ds[0])
-    dl = DT.DataLoader(ds, batch_size=1, shuffle=True, drop_last=True)
-    for d in dl:
-        print(d[0].shape)
-    # a = t.randn(4,)
-    # choice = t.randperm(4)
-    # print(a[0:2])
-    # print(a.shape)
-    # print(a[choice])
+    cfg = get_cfg()
+    ds = ModelNet(cfg=cfg, batch_index=0)
+    test_data = DT.DataLoader(
+       dataset=ds,
+       batch_size=cfg["batch_size"],
+       shuffle=False
+    )
+    for d in test_data:
+        print(d)

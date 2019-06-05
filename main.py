@@ -1,7 +1,9 @@
 # Author: llw
 import argparse
 
+import torch
 import torch.utils.data as DT
+from sklearn.metrics import accuracy_score
 
 from utils.trainer import Trainer
 from utils.tools import *
@@ -10,7 +12,7 @@ from model.graph_nn import *
 
 
 def arg_parse():
-    cfg = get_cfg("cfg/cfg.yml")
+    cfg = get_cfg()
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--gpu",
@@ -35,7 +37,8 @@ def arg_parse():
     parser.add_argument(
         "--lr",
         type=float,
-        default=cfg["lr"]
+        default=cfg["lr"],
+        # required=True
     )
     args = parser.parse_args()
     for arg in vars(args):
@@ -69,11 +72,12 @@ if __name__ == '__main__':
     logger.info(log_content + '}')
 
     criterion = t.nn.CrossEntropyLoss()
+    # criterion = t.nn.NLLLoss()
 
     optimizer = t.optim.Adam(
         params=model.parameters(),
         lr=cfg["lr"],
-        weight_decay=cfg["weight_decay"]
+        weight_decay=cfg["weight_decay"],
     )
     scheduler = t.optim.lr_scheduler.StepLR(
         optimizer=optimizer,
@@ -81,22 +85,27 @@ if __name__ == '__main__':
         gamma=cfg["lr_decay"]
     )
 
-    train_data = DT.DataLoader(
-        dataset=ModelNet(cfg, train=True),
-        batch_size=cfg["batch_size"],
-        shuffle=True
-    )
+    train_data_list = []
+    for index in range(5):
+        train_data_list.append(
+            DT.DataLoader(
+                dataset=ModelNet(cfg, data_type='train', batch_index=index),
+                batch_size=cfg["batch_size"],
+                shuffle=True
+            )
+        )
     test_data = DT.DataLoader(
-        dataset=ModelNet(cfg, train=False),
+        dataset=ModelNet(cfg, data_type='test', batch_index=0),
         batch_size=cfg["batch_size"],
         shuffle=True
     )
+    # test_data = train_data
 
     train(
         model=model,
         scheduler=optimizer,
         criterion=criterion,
-        train_data=train_data,
+        train_data=train_data_list,
         test_data=test_data,
         cfg=cfg,
         logger=logger

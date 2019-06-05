@@ -1,0 +1,5 @@
+*.zip
+*.rar
+venv
+*.vscode
+.idea

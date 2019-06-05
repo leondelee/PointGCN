@@ -32,6 +32,11 @@ if __name__ == '__main__':
         cfg = yaml.load(file)
     train = get_modelnet_data(cfg)
     print(train[0].pos)
+    choice = t.randperm(len(train))
+    print(choice)
+    # train = train[choice]
+    for i in range(len(train)):
+        print(train[i].y)
     # from torch_geometric.nn import knn_graph
     # x = t.randn(2000, 1000)
     # knn = knn_graph(x, 6)
