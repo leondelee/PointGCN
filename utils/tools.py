@@ -13,7 +13,16 @@ def show_point_clouds(pts, lbs):
     v.attributes(lbs)
 
 
-def get_cfg(cfg_path):
+def normalize_point_cloud(pts):
+    norm = pts[:, 0] ** 2 + pts[:, 1] ** 2 + pts[:, 2] ** 2
+    norm = t.sqrt(norm).reshape(-1, 1)
+    pts = pts / norm
+    return pts
+
+
+def get_cfg():
+    parent_path = os.path.dirname(__file__)
+    cfg_path = os.path.join(parent_path, '..', 'cfg/cfg.yml')
     with open(cfg_path, "r") as file:
         cfg = yaml.load(file)
         file.close()
@@ -66,15 +75,19 @@ def evaluate(model, metric, eval_data):
     log_content = ""
     res = 0
     cnt = 0
-    for data in tqdm(eval_data):
-        X, y, edge_index = data
-        X = X.reshape(-1, 3).float().cuda()
-        if X.shape[0] > 5000:
-            continue
-        edge_index = edge_index.reshape(2, -1).cuda()
-        y = y.long().reshape(-1, 1).to('cpu')
-        out = model(X, edge_index)
-        out = t.argmax(out, dim=1).cpu()
+    for batch_data in tqdm(eval_data):
+        X, y, lap = batch_data
+        X = X.cuda()
+        lap = lap.cuda()
+        y = y.cpu()
+        # edge_index = edge_index.reshape(2, -1).cuda()
+        X_var = t.autograd.Variable(X).float()
+        y_var = t.autograd.Variable(y).long()
+        lap_var = t.autograd.Variable(lap).float()
+        # input_var = [X_var, edge_index_var]
+        # pred_var = parallel_model(self.model, input_var, self.cfg["gpu"], [self.cfg["gpu"]])
+        out = model(X_var, lap_var)
+        out = t.argmax(out, dim=-1).cpu()
         res += metric(out, y)
         cnt += 1
     res = res / cnt
@@ -96,3 +109,8 @@ def parallel_model(model, input, output_device=0, device_ids=None):
         inputs[idx][1] = inputs[idx][1].reshape([2, -1])
     outputs = t.nn.parallel.parallel_apply(replicas, inputs)
     return t.nn.parallel.gather(outputs, output_device)
+
+
+if __name__ == '__main__':
+    cfg = get_cfg()
+    print(cfg)
