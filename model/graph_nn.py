@@ -18,18 +18,18 @@ class GraphGlobal(t.nn.Module):
         self.fc2 = t.nn.Linear(in_features=600, out_features=self.out_channels)
         self.dropout1 = t.nn.Dropout(p=cfg["drop_prob1"])
         self.dropout2 = t.nn.Dropout(p=cfg["drop_prob2"])
-        self.fc1.weight = t.nn.Parameter(
-            t.normal(mean=t.zeros(600, self.mid_channels * 4).float(), std=cfg["init_linear_std"] * t.ones(600, self.mid_channels * 4)).float()
-        )
-        self.fc1.bias = t.nn.Parameter(
-            t.normal(mean=t.zeros(600).float(), std=cfg["init_linear_std"] * t.ones(600).float())
-        )
-        self.fc2.weight = t.nn.Parameter(
-            t.normal(mean=t.zeros(self.out_channels, 600).float(), std=cfg["init_linear_std"] * t.ones(self.out_channels, 600).float())
-        )
-        self.fc2.bias = t.nn.Parameter(
-            t.normal(mean=t.zeros(self.out_channels).float(), std=cfg["init_linear_std"] * t.ones(self.out_channels).float())
-        )
+        # self.fc1.weight = t.nn.Parameter(
+        #     t.normal(mean=t.zeros(600, self.mid_channels * 4).float(), std=cfg["init_linear_std"] * t.ones(600, self.mid_channels * 4)).float()
+        # )
+        # self.fc1.bias = t.nn.Parameter(
+        #     t.normal(mean=t.zeros(600).float(), std=cfg["init_linear_std"] * t.ones(600).float())
+        # )
+        # self.fc2.weight = t.nn.Parameter(
+        #     t.normal(mean=t.zeros(self.out_channels, 600).float(), std=cfg["init_linear_std"] * t.ones(self.out_channels, 600).float())
+        # )
+        # self.fc2.bias = t.nn.Parameter(
+        #     t.normal(mean=t.zeros(self.out_channels).float(), std=cfg["init_linear_std"] * t.ones(self.out_channels).float())
+        # )
         # self.chev_conv_front = ChebConv(in_channels=self.in_channels, out_channels=self.mid_channels, K=cfg["first_cheb_order"])
         # self.chev_conv_front.weight = t.nn.Parameter(
         #     t.normal(mean=t.zeros(cfg["first_cheb_order"], self.in_channels, self.mid_channels).float(), std=cfg["init_std"]).float()
