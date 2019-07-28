@@ -1,0 +1,3 @@
+/home/neil/descriptor_learning/src/build/CMakeFiles/edit_cache.dir
+/home/neil/descriptor_learning/src/build/CMakeFiles/rebuild_cache.dir
+/home/neil/descriptor_learning/src/build/CMakeFiles/sdv.dir

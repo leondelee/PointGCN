@@ -12,8 +12,8 @@ class GraphGlobal(t.nn.Module):
         self.in_channels = cfg["in_channels"]
         self.out_channels = cfg["out_channels"]
         self.mid_channels = cfg["mid_channels"]
-        self.cheb_conv_front = ChebConv(self.in_channels, self.mid_channels, K=cfg["first_cheb_order"])
-        self.cheb_conv_back = ChebConv(self.mid_channels, self.mid_channels, K=cfg["second_cheb_order"])
+        self.cheb_conv_front = ChebConv(self.in_channels, self.mid_channels, K=cfg["first_cheb_order"], cfg=cfg)
+        self.cheb_conv_back = ChebConv(self.mid_channels, self.mid_channels, K=cfg["second_cheb_order"], cfg=cfg)
         self.fc1 = t.nn.Linear(in_features=self.mid_channels * 4, out_features=600)
         self.fc2 = t.nn.Linear(in_features=600, out_features=self.out_channels)
         self.dropout1 = t.nn.Dropout(p=cfg["drop_prob1"])

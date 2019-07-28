@@ -12,5 +12,4 @@ if __name__ == '__main__':
     a = t.randn(2, 3, 4);
     print(a)
     print(t.max(a, 1).values)
-    print(t.var(a, 1))
-    print(global_pooling(a))
+    # print(t.var(a, 1))

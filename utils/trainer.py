@@ -10,25 +10,26 @@ Author : llw
 import os
 import time
 
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, mean_squared_error
 
 from utils.tools import *
 
 
 class Trainer:
-    def __init__(self, model, criterion, scheduler, train_data, test_data, cfg, logger):
-        self.model = model
-        self.criterion = criterion
-        self.scheduler = scheduler
-        self.train_data = train_data
-        self.test_data = test_data
+    def __init__(self, cfg):
+        self.model = cfg['trainer_config']['model']
+        self.criterion = cfg['trainer_config']['criterion']
+        self.scheduler = cfg['trainer_config']['scheduler']
+        self.train_data = cfg['trainer_config']['train_data']
+        self.logger = cfg['trainer_config']['logger']
         self.max_epoch = int(cfg["max_epoch"])
         self.eval_step = int(cfg["eval_step"])
-        self.loss = 0
-        self.metric = 0
-        self.best_score = 0
+        self.lr_step = int(cfg['lr_step'])
+        self.lr_decay = float(cfg["lr_decay"])
         self.cfg = cfg
-        self.logger = logger
+        self.loss = 0
+        self.metric_value = 0
+        self.best_score = 0
         self.iteration = 0
 
     def run(self):
@@ -38,10 +39,12 @@ class Trainer:
             self.logger.info("Epoch {}/{}:".format(epoch, self.max_epoch))
             self.step()
             if (epoch + 1) % self.eval_step == 0:
-                log_content, self.metric = evaluate(self.model, accuracy_score, self.test_data)
+                log_info = evaluate(self.cfg)
+                log_content = "Average {} is {}.".format(log_info['metric_name'], log_info['value'])
+                self.metric_value = log_info['value']
                 self.logger.info(log_content)
-                if self.best_score < self.metric:
-                    self.best_score = self.metric
+                if self.best_score > self.metric_value:
+                    self.best_score = self.metric_value
                     self.logger.info("Saving checkpoint to {}.".format(os.path.join(self.cfg["root_path"],
                                                                                self.cfg["checkpoint_path"],
                                                                                self.cfg["name"] +
@@ -58,32 +61,21 @@ class Trainer:
     def step(self):
         self.loss = 0
         self.iteration += 1
-        if self.iteration % self.cfg["lr_step"] == 0:
+        if self.iteration % self.lr_step == 0:
             for group in self.scheduler.param_groups:
-                group['lr'] *= self.cfg["lr_decay"]
+                group['lr'] *= self.lr_decay
+                logger.info('Learning rate of {} is {}.'.format(group, group['lr']))
         cnt = 0
-        if type(self.train_data) != list:
-            raise Exception("Error!")
-        for data in self.train_data:
-            for batch_data in tqdm(data):
-                X, y, lap = batch_data
-                X = X.cuda()
-                lap = lap.cuda()
-                y = y.cuda()
-                # edge_index = edge_index.reshape(2, -1).cuda()
-                X_var = t.autograd.Variable(X).float()
-                y_var = t.autograd.Variable(y).long()
-                lap_var = t.autograd.Variable(lap).float()
-                # input_var = [X_var, edge_index_var]
-                # pred_var = parallel_model(self.model, input_var, self.cfg["gpu"], [self.cfg["gpu"]])
-                pred_var = self.model(X_var, lap_var)
-                loss = self.criterion(pred_var, y_var)
-                self.scheduler.zero_grad()
-                loss.backward()
-                self.scheduler.step()
-                self.loss += loss.data
-                cnt += 1
-            self.loss = self.loss / cnt
+        self.model.train()
+        for batch_data in tqdm(self.train_data):
+            self.scheduler.zero_grad()
+            output = self.model(batch_data)
+            loss = self.criterion(output) # + feature_transform_reguliarzer(trans_feat) * 0.001
+            loss.backward()
+            self.scheduler.step()
+            self.loss += loss.data
+            cnt += 1
+        self.loss = self.loss / cnt
 
 
 if __name__ == '__main__':

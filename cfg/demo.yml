@@ -4,14 +4,16 @@ root_path: /home/neil/leondelee/pointmatching/PointGCN/
 data_path: /home/neil/leondelee/pointmatching/PointGCN/data/
 checkpoint_path: checkpoints/
 log_path: logs/
+pkl_path: /home/neil/leondelee/pointmatching/PointGCN/3DSmoothNet/data/modelnet_descriptor_pkl/
 
 # dataset info
 K: 20
 dataset: modelnet
+num_pairs: 1
 
 #model
 num_points: 1024
-in_channels: 3
+in_channels: 64
 out_channels: 40
 mid_channels: 1000
 
@@ -34,7 +36,7 @@ weight_decay: 0
 lr_step: 20
 lr_decay: 0.9
 eval_step: 1
-batch_size: 32
+batch_size: 512
 gpu: 0
 init_cheb_std: 0.05
 init_linear_std: 0.05
