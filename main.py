@@ -1,4 +1,3 @@
-# Author: llw
 import argparse
 
 import torch
@@ -7,58 +6,59 @@ from sklearn.metrics import accuracy_score
 
 from utils.trainer import Trainer
 from utils.tools import *
-from data.data_loader import ModelNet
-from model.graph_nn import *
+from data.data_loader import ObjectsDataset as DataSet
+from model.smoothnet3d import SmoothNet3D as Model
+from model.smoothnet3d import DescLoss as Loss
+from model.smoothnet3d import DescMetric as Metric
 
 
 def arg_parse():
-    cfg = get_cfg()
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--gpu",
-        type=int,
-        default=cfg["gpu"]
-    )
-    parser.add_argument(
-        "--max_epoch",
-        type=int,
-        default=cfg["max_epoch"]
-    )
-    parser.add_argument(
-        "--eval_step",
-        type=int,
-        default=cfg["eval_step"]
-    )
-    parser.add_argument(
-        "--name",
+        '--name',
         type=str,
-        default=cfg["name"]
+        default='demo'
     )
     parser.add_argument(
-        "--lr",
-        type=float,
-        default=cfg["lr"],
-        # required=True
+        '--gpu',
+        type=str,
+        default='-1'
     )
+    parser.add_argument(
+        '--batch_size',
+        type=str,
+        default='-1'
+    )
+    parser.add_argument(
+        '--num_pairs',
+        type=str,
+        default='-1'
+    )
+    parser.add_argument(
+        '--task',
+        type=str,
+        default='train'
+    )
+
     args = parser.parse_args()
-    for arg in vars(args):
-        cfg[arg] = getattr(args, arg)
+    cfg = get_cfg(args)
     return cfg
 
 
-def train(model, criterion, scheduler, train_data, test_data, cfg, logger):
-    trainer = Trainer(model, criterion, scheduler, train_data, test_data, cfg, logger)
+def train(config):
+    trainer = Trainer(config)
     trainer.run()
 
 
 if __name__ == '__main__':
     cfg = arg_parse()
-    t.cuda.set_device(cfg["gpu"])
+    t.cuda.set_device(int(cfg["gpu"]))
     assert t.cuda.current_device() == int(cfg["gpu"])
 
     # checkpoint = get_checkpoints(cfg)
     checkpoint = None
-    model = GraphGlobal(cfg).cuda()
+    # model = GraphGlobal(cfg).cuda()
+    model = Model(cfg).cuda()
     if checkpoint:
         model.load_state_dict(t.load(checkpoint))
 
@@ -71,44 +71,41 @@ if __name__ == '__main__':
         log_content += "    {}: {}\n".format(key, cfg[key])
     logger.info(log_content + '}')
 
-    criterion = t.nn.CrossEntropyLoss()
+    criterion = Loss()
+    metric = Metric()
     # criterion = t.nn.NLLLoss()
 
     optimizer = t.optim.Adam(
         params=model.parameters(),
-        lr=cfg["lr"],
-        weight_decay=cfg["weight_decay"],
-    )
-    scheduler = t.optim.lr_scheduler.StepLR(
-        optimizer=optimizer,
-        step_size=cfg["lr_step"],
-        gamma=cfg["lr_decay"]
+        lr=float(cfg["lr"]),
+        weight_decay=float(cfg["weight_decay"]),
     )
 
-    train_data_list = []
-    for index in range(5):
-        train_data_list.append(
-            DT.DataLoader(
-                dataset=ModelNet(cfg, data_type='train', batch_index=index),
-                batch_size=cfg["batch_size"],
-                shuffle=True
-            )
-        )
-    test_data = DT.DataLoader(
-        dataset=ModelNet(cfg, data_type='test', batch_index=0),
-        batch_size=cfg["batch_size"],
+    train_data = DT.DataLoader(
+        dataset=DataSet(cfg, True),
+        batch_size=int(cfg["batch_size"]),
         shuffle=True
     )
-    # test_data = train_data
 
-    train(
-        model=model,
-        scheduler=optimizer,
-        criterion=criterion,
-        train_data=train_data_list,
-        test_data=test_data,
-        cfg=cfg,
-        logger=logger
+    test_data = DT.DataLoader(
+        dataset=DataSet(cfg, False),
+        batch_size=int(cfg["batch_size"]),
+        shuffle=True
     )
+    cfg['trainer_config'] = dict(
+        model=model,
+        criterion=criterion,
+        metric=metric,
+        logger=logger,
+        scheduler=optimizer,
+        train_data=train_data,
+        test_data=test_data
+    )
+    if cfg['task'] == 'train':
+        train(cfg)
+    else:
+        evaluate(cfg)
 
-    # evaluate(model, accuracy_score, test_data)
+
+
+
