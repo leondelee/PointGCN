@@ -1,12 +1,12 @@
 # path_info
-# root_path: /home/neil/leondelee/pointmatching/graph/
-root_path: /home/liangwei/3D/graph/
-data_path: data/
+root_path: /home/neil/leondelee/pointmatching/PointGCN/
+# root_path: /home/liangwei/3D/graph/
+data_path: /home/neil/leondelee/pointmatching/PointGCN/data/
 checkpoint_path: checkpoints/
 log_path: logs/
 
 # dataset info
-K: 40
+K: 20
 dataset: modelnet
 
 #model
@@ -29,15 +29,16 @@ second_cheb_order: 3
 # train
 mode: debug
 max_epoch: 100
-lr: 0.0006
+lr: 0.001
 weight_decay: 0
 lr_step: 20
-lr_decay: 0.5
+lr_decay: 0.9
 eval_step: 1
-batch_size: 28
+batch_size: 32
 gpu: 0
 init_cheb_std: 0.05
 init_linear_std: 0.05
+task: cls
 
 # results
 name: demo
